@@ -13,6 +13,9 @@ compatibility with industry software frameworks. For more information, see [What
 
 If you're using Radeon GPUs, consider reviewing {doc}`Radeon-specific ROCm documentation<radeon:index>`.
 
+{doc}`HIP programming guide<hip:index>` serves as a model and interface guide 
+for ROCm.
+
 Installation instructions are available from:
 
 * {doc}`ROCm installation for Linux<rocm-install-on-linux:index>`
