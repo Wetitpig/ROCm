@@ -23,6 +23,8 @@ subtrees:
 
 - caption: How to
   entries:
+  - url: https://rocm.docs.amd.com/projects/hip/en/${branch}/
+    title: Programming guide
   - file: how-to/rocm-for-ai/index.rst
     title: Using ROCm for AI
     subtrees:
