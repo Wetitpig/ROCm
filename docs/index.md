@@ -37,7 +37,7 @@ ROCm documentation is organized into the following categories:
 :::{grid-item-card} How to
 :class-body: rocm-card-banner rocm-hue-12
 
-* {doc}`Programming guide<hip:index>`
+* [Programming guide](./how-to/hip_programming_guide.rst)
 * [Using ROCm for AI](./how-to/rocm-for-ai/index.rst)
 * [Using ROCm for HPC](./how-to/rocm-for-hpc/index.rst)
 * [Fine-tuning LLMs and inference optimization](./how-to/llm-fine-tuning-optimization/index.rst)

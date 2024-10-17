@@ -149,5 +149,5 @@ Runtimes
   :header: "Component", "Description"
 
   ":doc:`AMD Common Language Runtime (CLR) <hip:understand/amd_clr>`", "Contains source code for AMD's common language runtimes: HIP and OpenCL"
-  ":doc:`HIP <hip:index>`", "AMD's GPU programming language extension and the GPU runtime"
+  ":doc:`HIP <hip:index>`", "C++ runtime API and kernel language that lets developers create portable applications for AMD and NVIDIA GPUs from single source code."
   ":doc:`ROCR-Runtime <rocr-runtime:index>`", "User-mode API interfaces and libraries necessary for host applications to launch compute kernels on available HSA ROCm kernel agents"
