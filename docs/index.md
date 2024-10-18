@@ -9,12 +9,16 @@
 
 ROCm is an open-source software platform optimized to extract HPC and AI workload
 performance from AMD Instinct accelerators and AMD Radeon GPUs while maintaining
-compatibility with industry software frameworks. For more information, see [What is ROCm?](./what-is-rocm.rst)
+compatibility with industry software frameworks. For more information, see
+[What is ROCm?](./what-is-rocm.rst)
+
+The ROCm platform uses the Heterogeneous System Architecture (HSA) to support
+computing across multiple hardware architectures, letting developers write code
+that runs on both AMD CPUs and GPUs. ROCm supports multiple programming
+languages such as HIP (Heterogeneous-Compute Interface for Portability), OpenCL,
+and OpenMP, as described in {doc}`HIP programming guide<hip:index>`. 
 
 If you're using Radeon GPUs, consider reviewing {doc}`Radeon-specific ROCm documentation<radeon:index>`.
-
-{doc}`HIP programming guide<hip:index>` serves as a model and interface guide 
-for ROCm.
 
 ROCm documentation is organized into the following categories:
 
