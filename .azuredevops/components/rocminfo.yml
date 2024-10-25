@@ -65,8 +65,7 @@ jobs:
   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/local-artifact-download.yml
     parameters:
       buildType: specific
-      definitionId: 166
-      buildId: 11044
+      buildId: 11078
   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-rocm.yml
     parameters:
       dependencyList: ${{ parameters.rocmTestDependencies }}
