@@ -132,7 +132,7 @@ jobs:
     parameters:
       gpuTarget: $(JOB_GPU_TARGET)
       buildType: specific
-      buildIf: 11205
+      buildId: 11205
   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-aqlprofile.yml
     parameters:
       ${{ if eq(parameters.checkoutRef, 'develop') }}:
