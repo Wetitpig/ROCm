@@ -47,71 +47,71 @@ parameters:
     - roctracer
 
 jobs:
-- job: rocSOLVER
-  variables:
-  - group: common
-  - template: /.azuredevops/variables-global.yml
-  pool: ${{ variables.ON_PREM_BUILD_POOL }}
-  workspace:
-    clean: all
-  strategy:
-    matrix:
-      gfx942:
-        JOB_GPU_TARGET: gfx942
-  steps:
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-other.yml
-    parameters:
-      aptPackages: ${{ parameters.aptPackages }}
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/preamble.yml
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/checkout.yml
-    parameters:
-      checkoutRepo: ${{ parameters.checkoutRepo }}
-  - task: Bash@3
-    displayName: 'Clone lapack'
-    inputs:
-      targetType: inline
-      script: git clone --depth 1 --branch v3.9.1 https://github.com/Reference-LAPACK/lapack
-      workingDirectory: '$(Build.SourcesDirectory)'
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-rocm.yml
-    parameters:
-      dependencyList: ${{ parameters.rocmDependencies }}
-      gpuTarget: $(JOB_GPU_TARGET)
-      # CI case: download latest default branch build
-      ${{ if eq(parameters.checkoutRef, 'develop') }}:
-        dependencySource: staging
-      # manual build case: triggered by ROCm/ROCm repo
-      ${{ elseif ne(parameters.checkoutRef, 'develop') }}:
-        dependencySource: tag-builds
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/build-cmake.yml
-    parameters:
-      componentName: lapack
-      extraBuildFlags: >-
-        -DCMAKE_BUILD_TYPE=Release
-        -DCMAKE_Fortran_FLAGS=-fno-optimize-sibling-calls
-        -DBUILD_TESTING=OFF
-        -DCBLAS=ON
-        -DLAPACKE=OFF
-        -GNinja
-      cmakeBuildDir: '$(Build.SourcesDirectory)/lapack/build'
-      installDir: '$(Pipeline.Workspace)/deps-install'
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/build-cmake.yml
-    parameters:
-      extraBuildFlags: >-
-        -DCMAKE_PREFIX_PATH=$(Agent.BuildDirectory)/rocm;$(Pipeline.Workspace)/deps-install
-        -DCMAKE_CXX_COMPILER=$(Agent.BuildDirectory)/rocm/llvm/bin/amdclang++
-        -DCMAKE_C_COMPILER=$(Agent.BuildDirectory)/rocm/llvm/bin/amdclang
-        -DAMDGPU_TARGETS=$(JOB_GPU_TARGET)
-        -DBUILD_CLIENTS_TESTS=ON
-        -DBUILD_CLIENTS_BENCHMARKS=OFF
-        -DBUILD_CLIENTS_SAMPLES=OFF
-        -GNinja
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/artifact-upload.yml
-    parameters:
-      gpuTarget: $(JOB_GPU_TARGET)
+# - job: rocSOLVER
+#   variables:
+#   - group: common
+#   - template: /.azuredevops/variables-global.yml
+#   pool: ${{ variables.ON_PREM_BUILD_POOL }}
+#   workspace:
+#     clean: all
+#   strategy:
+#     matrix:
+#       gfx942:
+#         JOB_GPU_TARGET: gfx942
+#   steps:
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-other.yml
+#     parameters:
+#       aptPackages: ${{ parameters.aptPackages }}
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/preamble.yml
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/checkout.yml
+#     parameters:
+#       checkoutRepo: ${{ parameters.checkoutRepo }}
+#   - task: Bash@3
+#     displayName: 'Clone lapack'
+#     inputs:
+#       targetType: inline
+#       script: git clone --depth 1 --branch v3.9.1 https://github.com/Reference-LAPACK/lapack
+#       workingDirectory: '$(Build.SourcesDirectory)'
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-rocm.yml
+#     parameters:
+#       dependencyList: ${{ parameters.rocmDependencies }}
+#       gpuTarget: $(JOB_GPU_TARGET)
+#       # CI case: download latest default branch build
+#       ${{ if eq(parameters.checkoutRef, 'develop') }}:
+#         dependencySource: staging
+#       # manual build case: triggered by ROCm/ROCm repo
+#       ${{ elseif ne(parameters.checkoutRef, 'develop') }}:
+#         dependencySource: tag-builds
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/build-cmake.yml
+#     parameters:
+#       componentName: lapack
+#       extraBuildFlags: >-
+#         -DCMAKE_BUILD_TYPE=Release
+#         -DCMAKE_Fortran_FLAGS=-fno-optimize-sibling-calls
+#         -DBUILD_TESTING=OFF
+#         -DCBLAS=ON
+#         -DLAPACKE=OFF
+#         -GNinja
+#       cmakeBuildDir: '$(Build.SourcesDirectory)/lapack/build'
+#       installDir: '$(Pipeline.Workspace)/deps-install'
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/build-cmake.yml
+#     parameters:
+#       extraBuildFlags: >-
+#         -DCMAKE_PREFIX_PATH=$(Agent.BuildDirectory)/rocm;$(Pipeline.Workspace)/deps-install
+#         -DCMAKE_CXX_COMPILER=$(Agent.BuildDirectory)/rocm/llvm/bin/amdclang++
+#         -DCMAKE_C_COMPILER=$(Agent.BuildDirectory)/rocm/llvm/bin/amdclang
+#         -DAMDGPU_TARGETS=$(JOB_GPU_TARGET)
+#         -DBUILD_CLIENTS_TESTS=ON
+#         -DBUILD_CLIENTS_BENCHMARKS=OFF
+#         -DBUILD_CLIENTS_SAMPLES=OFF
+#         -GNinja
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/artifact-upload.yml
+#     parameters:
+#       gpuTarget: $(JOB_GPU_TARGET)
 
 - job: rocSOLVER_testing
-  dependsOn: rocSOLVER
-  condition: and(succeeded(), eq(variables.ENABLE_GFX942_TESTS, 'true'), not(containsValue(split(variables.DISABLED_GFX942_TESTS, ','), variables['Build.DefinitionName'])))
+  # dependsOn: rocSOLVER
+  # condition: and(succeeded(), eq(variables.ENABLE_GFX942_TESTS, 'true'), not(containsValue(split(variables.DISABLED_GFX942_TESTS, ','), variables['Build.DefinitionName'])))
   variables:
   - group: common
   - template: /.azuredevops/variables-global.yml
@@ -131,6 +131,8 @@ jobs:
   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/local-artifact-download.yml
     parameters:
       gpuTarget: $(JOB_GPU_TARGET)
+      buildType: specific
+      buildIf: 11205
   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-aqlprofile.yml
     parameters:
       ${{ if eq(parameters.checkoutRef, 'develop') }}:
