@@ -16,7 +16,7 @@ The ROCm platform uses the Heterogeneous System Architecture (HSA) to support
 computing across multiple hardware architectures, letting developers write code
 that runs on both AMD CPUs and GPUs. ROCm supports multiple programming
 languages such as HIP (Heterogeneous-Compute Interface for Portability), OpenCL,
-and OpenMP, as described in {doc}`HIP programming guide<hip:index>`. 
+and OpenMP, as described in {doc}`HIP programming guide<hip:index>`.
 
 If you're using Radeon GPUs, consider reviewing {doc}`Radeon-specific ROCm documentation<radeon:index>`.
 
