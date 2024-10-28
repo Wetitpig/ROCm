@@ -63,59 +63,59 @@ parameters:
     - roctracer
 
 jobs:
-- job: rocm_examples
-  variables:
-  - group: common
-  - template: /.azuredevops/variables-global.yml
-  pool: ${{ variables.ON_PREM_BUILD_POOL }}
-  workspace:
-    clean: all
-  strategy:
-    matrix:
-      gfx942:
-        JOB_GPU_TARGET: gfx942
-  steps:
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-other.yml
-    parameters:
-      aptPackages: ${{ parameters.aptPackages }}
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/preamble.yml
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/checkout.yml
-    parameters:
-      checkoutRepo: ${{ parameters.checkoutRepo }}
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-rocm.yml
-    parameters:
-      dependencyList: ${{ parameters.rocmDependencies }}
-      gpuTarget: $(JOB_GPU_TARGET)
-      # CI case: download latest default branch build
-      ${{ if eq(parameters.checkoutRef, 'develop') }}:
-        dependencySource: staging
-      # manual build case: triggered by ROCm/ROCm repo
-      ${{ elseif ne(parameters.checkoutRef, 'develop') }}:
-        dependencySource: tag-builds
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/build-cmake.yml
-    parameters:
-      # https://github.com/ROCm/HIP/issues/2203
-      extraBuildFlags: >-
-        -DCMAKE_CXX_COMPILER=$(Agent.BuildDirectory)/rocm/llvm/bin/amdclang++
-        -DCMAKE_PREFIX_PATH=$(Agent.BuildDirectory)/rocm
-        -DROCM_ROOT=$(Agent.BuildDirectory)/rocm
-        -DAMDGPU_TARGETS=$(JOB_GPU_TARGET)
-        -DCMAKE_HIP_ARCHITECTURES=$(JOB_GPU_TARGET)
-        -DCMAKE_EXE_LINKER_FLAGS=-fgpu-rdc
-  - task: Bash@3
-    displayName: Move rocm-examples binaries to rocm/examples
-    inputs:
-      targetType: inline
-      script: |
-        mkdir -p $(Build.BinariesDirectory)/examples
-        mv $(Build.BinariesDirectory)/bin/* $(Build.BinariesDirectory)/examples
-  - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/artifact-upload.yml
-    parameters:
-      gpuTarget: $(JOB_GPU_TARGET)
+# - job: rocm_examples
+#   variables:
+#   - group: common
+#   - template: /.azuredevops/variables-global.yml
+#   pool: ${{ variables.ON_PREM_BUILD_POOL }}
+#   workspace:
+#     clean: all
+#   strategy:
+#     matrix:
+#       gfx942:
+#         JOB_GPU_TARGET: gfx942
+#   steps:
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-other.yml
+#     parameters:
+#       aptPackages: ${{ parameters.aptPackages }}
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/preamble.yml
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/checkout.yml
+#     parameters:
+#       checkoutRepo: ${{ parameters.checkoutRepo }}
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-rocm.yml
+#     parameters:
+#       dependencyList: ${{ parameters.rocmDependencies }}
+#       gpuTarget: $(JOB_GPU_TARGET)
+#       # CI case: download latest default branch build
+#       ${{ if eq(parameters.checkoutRef, 'develop') }}:
+#         dependencySource: staging
+#       # manual build case: triggered by ROCm/ROCm repo
+#       ${{ elseif ne(parameters.checkoutRef, 'develop') }}:
+#         dependencySource: tag-builds
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/build-cmake.yml
+#     parameters:
+#       # https://github.com/ROCm/HIP/issues/2203
+#       extraBuildFlags: >-
+#         -DCMAKE_CXX_COMPILER=$(Agent.BuildDirectory)/rocm/llvm/bin/amdclang++
+#         -DCMAKE_PREFIX_PATH=$(Agent.BuildDirectory)/rocm
+#         -DROCM_ROOT=$(Agent.BuildDirectory)/rocm
+#         -DAMDGPU_TARGETS=$(JOB_GPU_TARGET)
+#         -DCMAKE_HIP_ARCHITECTURES=$(JOB_GPU_TARGET)
+#         -DCMAKE_EXE_LINKER_FLAGS=-fgpu-rdc
+#   - task: Bash@3
+#     displayName: Move rocm-examples binaries to rocm/examples
+#     inputs:
+#       targetType: inline
+#       script: |
+#         mkdir -p $(Build.BinariesDirectory)/examples
+#         mv $(Build.BinariesDirectory)/bin/* $(Build.BinariesDirectory)/examples
+#   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/artifact-upload.yml
+#     parameters:
+#       gpuTarget: $(JOB_GPU_TARGET)
 
 - job: rocm_examples_testing
-  dependsOn: rocm_examples
-  condition: and(succeeded(), eq(variables.ENABLE_GFX942_TESTS, 'true'), not(containsValue(split(variables.DISABLED_GFX942_TESTS, ','), variables['Build.DefinitionName'])))
+  # dependsOn: rocm_examples
+  # condition: and(succeeded(), eq(variables.ENABLE_GFX942_TESTS, 'true'), not(containsValue(split(variables.DISABLED_GFX942_TESTS, ','), variables['Build.DefinitionName'])))
   variables:
   - group: common
   - template: /.azuredevops/variables-global.yml
@@ -166,4 +166,4 @@ jobs:
     parameters:
       componentName: rocm-examples
       testDir: $(Build.SourcesDirectory)/build
-      reloadAMDGPU: true
+      reloadAMDGPU: false
