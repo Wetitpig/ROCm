@@ -55,7 +55,7 @@ performance:
    You must target specific tasks to the appropriate architecture to optimize
    your application performance. Target computationally intensive,
    parallelizable parts to the GPU, while running control-heavy and sequential
-   logic on the CPU. For more information, see :doc:`Hardware Implementation <hip:understand/hardware_implementation.html>`.
+   logic on the CPU. For more information, see :doc:`Hardware Implementation <hip:understand/hardware_implementation>`.
 
 #. Write GPU Kernels for Parallel Execution: Efficient GPU kernels can greatly
    speed up computation by leveraging massive parallelism. Write kernels that
