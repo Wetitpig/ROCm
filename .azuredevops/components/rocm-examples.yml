@@ -121,14 +121,14 @@ jobs:
   - template: /.azuredevops/variables-global.yml
   - name: TEST_LOG_FILE
     value: $(Pipeline.Workspace)/rocm-examplesTestLog.log
-  pool: $(ON_PREM_BUILD_POOL)
+  pool: $(JOB_TEST_POOL)
   workspace:
     clean: all
   strategy:
     matrix:
       gfx942:
         JOB_GPU_TARGET: gfx942
-        JOB_TEST_POOL: ${{ variables.GFX942_TEST_POOL }}
+        JOB_TEST_POOL: ${{ variables.ON_PREM_BUILD_POOL }}
   steps:
   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-other.yml
     parameters:

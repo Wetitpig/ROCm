@@ -51,7 +51,7 @@ jobs:
   variables:
   - group: common
   - template: /.azuredevops/variables-global.yml
-  pool: ${{ variables.MEDIUM_BUILD_POOL }}
+  pool: ${{ variables.ON_PREM_BUILD_POOL }}
   workspace:
     clean: all
   strategy:
@@ -77,10 +77,10 @@ jobs:
       dependencyList: ${{ parameters.rocmDependencies }}
       gpuTarget: $(JOB_GPU_TARGET)
       # CI case: download latest default branch build
-      ${{ if eq(parameters.checkoutRef, '') }}:
+      ${{ if eq(parameters.checkoutRef, 'develop') }}:
         dependencySource: staging
       # manual build case: triggered by ROCm/ROCm repo
-      ${{ elseif ne(parameters.checkoutRef, '') }}:
+      ${{ elseif ne(parameters.checkoutRef, 'develop') }}:
         dependencySource: tag-builds
   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/build-cmake.yml
     parameters:
@@ -122,7 +122,7 @@ jobs:
     matrix:
       gfx942:
         JOB_GPU_TARGET: gfx942
-        JOB_TEST_POOL: ${{ variables.GFX942_TEST_POOL }}
+        JOB_TEST_POOL: ${{ variables.ON_PREM_BUILD_POOL }}
   steps:
   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-other.yml
     parameters:
@@ -133,17 +133,17 @@ jobs:
       gpuTarget: $(JOB_GPU_TARGET)
   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-aqlprofile.yml
     parameters:
-      ${{ if eq(parameters.checkoutRef, '') }}:
+      ${{ if eq(parameters.checkoutRef, 'develop') }}:
         dependencySource: staging
-      ${{ elseif ne(parameters.checkoutRef, '') }}:
+      ${{ elseif ne(parameters.checkoutRef, 'develop') }}:
         dependencySource: tag-builds
   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/dependencies-rocm.yml
     parameters:
       dependencyList: ${{ parameters.rocmTestDependencies }}
       gpuTarget: $(JOB_GPU_TARGET)
-      ${{ if eq(parameters.checkoutRef, '') }}:
+      ${{ if eq(parameters.checkoutRef, 'develop') }}:
         dependencySource: staging
-      ${{ elseif ne(parameters.checkoutRef, '') }}:
+      ${{ elseif ne(parameters.checkoutRef, 'develop') }}:
         dependencySource: tag-builds
   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/gpu-diagnostics.yml
   - template: ${{ variables.CI_TEMPLATE_PATH }}/steps/test.yml
