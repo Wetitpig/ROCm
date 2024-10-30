@@ -5,7 +5,7 @@ set -ex
 # The following assumes that you have a cache, e.g.
 # https://docs.docker.com/engine/examples/apt-cacher-ng/
 # Comment out if it breaks things
-echo 'Acquire::http { Proxy "http://rocm-ci-services.amd.com:3142";  };' > /etc/apt/apt.conf.d/01proxy
+# echo 'Acquire::http { Proxy "http://rocm-ci-services.amd.com:3142";  };' > /etc/apt/apt.conf.d/01proxy
 
 apt-get update 
 DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get install --no-install-recommends -y $(sed 's/#.*//' /tmp/packages)
