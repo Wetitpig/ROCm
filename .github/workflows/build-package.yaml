@@ -18,7 +18,7 @@ jobs:
       GPU_ARCHS: gfx900
     strategy:
       matrix:
-        version: [20, 22, 24]
+        version: [22, 24]
     name: ${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04
     runs-on: ubuntu-latest
     steps:
