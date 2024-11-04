@@ -52,13 +52,26 @@ jobs:
             echo 'DEPS='${DEPS} >> $GITHUB_OUTPUT
           fi
       - name: Download package dependencies
-        uses: actions/download-artifact@v4.1.6
+        if: ${{inputs.DEPENDS != '' && inputs.DEPENDS != '{}'}}
+        uses: actions/download-artifact@v4
         with:
-          pattern: |
-            {Package,Logs}-${{steps.analyse-deps.outputs.DEPS}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}
+          pattern: Package-${{steps.analyse-deps.outputs.DEPS}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}
+          path: out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/deb
+          merge-multiple: true
+      - name: Download log dependencies
+        if: ${{inputs.DEPENDS != '' && inputs.DEPENDS != '{}'}}
+        uses: actions/download-artifact@v4
+        with:
+          pattern: Logs-${{steps.analyse-deps.outputs.DEPS}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}
+          path: out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/logs
           merge-multiple: true
       - name: Install dependencies
-        run: if [ -d out ]; then find out -name "*.deb" -type f -exec sudo dpkg -i {} \; -exec rm {} \;; fi
+        if: ${{inputs.DEPENDS != '' && inputs.DEPENDS != '{}'}}
+        run: |
+          if [ -d out ]; then
+            find out -name "*.deb" -type f -exec sudo dpkg --force-all -i {} \;
+          fi
+          rm -rf out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/deb
 
       - name: Make ROCm
         run: |
