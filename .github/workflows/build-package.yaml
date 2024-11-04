@@ -1,0 +1,92 @@
+name: Build ROCm Package
+
+on:
+  workflow_call:
+    inputs:
+      PACKAGE_NAME:
+        required: true
+        type: string
+      DEPENDS:
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  build:
+    name: ${{inputs.PACKAGE_NAME}}
+    env:
+      ROCM_VERSION: 6.2.2
+      GPU_ARCHS: gfx900
+    strategy:
+      matrix:
+        version: [20, 22, 24]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Maximise build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 15360
+          remove-dotnet: true
+          remove-android: true
+          remove-haskell: true
+          remove-codeql: true
+          remove-docker-images: true
+
+      - name: Clone dependent repositories
+        run: |
+          mkdir -p ~/.bin && curl https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo && chmod a+rx ~/.bin/repo
+          ~/.bin/repo init -u http://github.com/ROCm/ROCm.git -b roc-6.2.x -m tools/rocm-build/rocm-${ROCM_VERSION}.xml --depth 1 && ~/.bin/repo sync
+          if [ ${{inputs.PACKAGE_NAME}} = "rocm_bandwidth_test" ]; then cd rocm_bandwidth_test && git fetch --unshallow; fi
+      - name: Clone repo
+        uses: actions/checkout@v4
+        with:
+          path: ROCm
+
+      - name: Analyse package dependencies
+        id: analyse-deps
+        run: |
+          DEPS=$(echo '${{inputs.DEPENDS}}' | jq -r 'keys | map(tostring) | join(",")')
+          if echo $DEPS | grep -q ','; then
+            echo 'DEPS={'${DEPS}'}' >> $GITHUB_OUTPUT
+          else
+            echo 'DEPS='${DEPS} >> $GITHUB_OUTPUT
+          fi
+      - name: Download package dependencies
+        uses: actions/download-artifact@v4
+        with:
+          pattern: |
+            {Package,Logs}-${{steps.analyse-deps.outputs.DEPS}}-${{matrix.version}}.04
+          merge-multiple: true
+      - name: Install dependencies
+        run: if [ -d out ]; then find out -name "*.deb" -type f -exec sudo dpkg -i {} \; -exec rm {} \;; fi
+
+      - name: Make ROCm
+        run: |
+          docker run \
+            -e ROCM_VERSION=${ROCM_VERSION} \
+            -e GPU_ARCHS=${GPU_ARCHS} \
+            -e CCACHE_DIR=$HOME/.ccache \
+            -e CCACHE_ENABLED=true \
+            -e DOCK_WORK_FOLD=/src \
+            -v $PWD:/src \
+            -v /etc/passwd:/etc/passwd \
+            -v /etc/shadow:/etc/shadow \
+            -v ${HOME}/.ccache:${HOME}/.ccache \
+            -w /src \
+            -u $(id -u):$(id -g) \
+            rocm/rocm-build-ubuntu-${{matrix.version}}.04:6.2 \
+            make -f ROCm/tools/rocm-build/ROCm.mk -j ${NPROC:-$(nproc)} T_${{inputs.PACKAGE_NAME}}
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Package-${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04
+          path: out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/deb
+          retention-days: 3
+      - name: Archive logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Logs-${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04
+          path: out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/logs/${{inputs.PACKAGE_NAME}}*
+          retention-days: 3

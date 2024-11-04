@@ -3,81 +3,415 @@ name: Build ROCm
 on: [push]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{github.workflow}}-${{github.ref}}
   cancel-in-progress: true
 
-env:
-  ROCM_VERSION: 6.2.2
-  GPU_ARCHS: gfx900
-
 jobs:
-  Build:
-    strategy:
-        matrix:
-            version: [20, 22, 24]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Free Disk Space
-        uses: AdityaGarg8/remove-unwanted-software@v4.1
-        with:
-          remove-dotnet: true
-          remove-android: true
-          remove-haskell: true
-          remove-codeql: true
-          remove-docker-images: true
-          remove-large-packages: true
-          remove-cached-tools: true
-          verbose: false
-      - name: Join volumes
-        uses: easimon/maximize-build-space@master
-        with:
-          root-reserve-mb: 15360
+  amd_smi_lib:
+    uses: ./.github/workflows/build-package.yaml
+    with:
+      PACKAGE_NAME: amd_smi_lib
 
-      - name: Clone dependent repositories
-        run: |
-            mkdir -p ~/.bin
-            curl https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo
-            chmod a+rx ~/.bin/repo
+  aqlprofile:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hsa]
+    with:
+      PACKAGE_NAME: aqlprofile
+      DEPENDS: ${{toJSON(needs)}}
 
-            ~/.bin/repo init -u http://github.com/ROCm/ROCm.git -b roc-6.2.x -m tools/rocm-build/rocm-${ROCM_VERSION}.xml --depth 1
-            ~/.bin/repo sync
-            cd rocm_bandwidth_test && git fetch --unshallow
-      - name: Clone repo
-        uses: actions/checkout@v4
-        with:
-          path: ROCm
+  comgr:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [lightning,devicelibs]
+    with:
+      PACKAGE_NAME: comgr
+      DEPENDS: ${{toJSON(needs)}}
 
-      - name: Pull docker image
-        run: docker pull rocm/rocm-build-ubuntu-${{matrix.version}}.04:6.2
- 
-      - name: Make ROCm
-        run: |
-          docker run \
-            -e ROCM_VERSION=${ROCM_VERSION} \
-            -e GPU_ARCHS=${GPU_ARCHS} \
-            -e CCACHE_DIR=$HOME/.ccache \
-            -e CCACHE_ENABLED=true \
-            -e DOCK_WORK_FOLD=/src \
-            -w /src \
-            -v $PWD:/src \
-            -v /etc/passwd:/etc/passwd \
-            -v /etc/shadow:/etc/shadow \
-            -v ${HOME}/.ccache:${HOME}/.ccache \
-            -u $(id -u):$(id -g) \
-            rocm/rocm-build-ubuntu-${{matrix.version}}.04:6.2 \
-            make -f ROCm/tools/rocm-build/ROCm.mk -j ${NPROC:-$(($(nproc) * 2))} all
-        
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v4
-        with:
-            name: ROCm packages for Ubuntu ${{matrix.version}}.04
-            path: out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/deb
-            retention-days: 3
-      - name: Archive logs
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-            name: Build logs for Ubuntu ${{matrix.version}}.04
-            path: out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/logs
-            retention-days: 3
-      
+  dbgapi:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hsa,comgr]
+    with:
+      PACKAGE_NAME: dbgapi
+      DEPENDS: ${{toJSON(needs)}}
+
+  devicelibs:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [lightning]
+    with:
+      PACKAGE_NAME: devicelibs
+      DEPENDS: ${{toJSON(needs)}}
+
+  hip_on_rocclr:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hsa,comgr,hipcc,rocprofiler-register]
+    with:
+      PACKAGE_NAME: hip_on_rocclr
+      DEPENDS: ${{toJSON(needs)}}
+
+  hipcc:
+    uses: ./.github/workflows/build-package.yaml
+    with:
+      PACKAGE_NAME: hipcc
+      DEPENDS: ${{toJSON(needs)}}
+
+  hipify_clang:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,lightning]
+    with:
+      PACKAGE_NAME: hipify_clang
+      DEPENDS: ${{toJSON(needs)}}
+
+  hsa:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [thunk,lightning,devicelibs,rocprofiler-register]
+    with:
+      PACKAGE_NAME: hsa
+      DEPENDS: ${{toJSON(needs)}}
+
+  lightning:
+    uses: ./.github/workflows/build-package.yaml
+    with:
+      PACKAGE_NAME: lightning
+      DEPENDS: ${{toJSON(needs)}}
+
+  omniperf:
+    uses: ./.github/workflows/build-package.yaml
+    with:
+      PACKAGE_NAME: omniperf
+      DEPENDS: ${{toJSON(needs)}}
+
+  omnitrace:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hipcc,hsa,hip_on_rocclr,rocm_smi_lib,rocprofiler,roctracer]
+    with:
+      PACKAGE_NAME: omnitrace
+      DEPENDS: ${{toJSON(needs)}}
+
+  opencl_icd_loader:
+    uses: ./.github/workflows/build-package.yaml
+    with:
+      PACKAGE_NAME: opencl_icd_loader
+      DEPENDS: ${{toJSON(needs)}}
+
+  opencl_on_rocclr:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hsa,comgr,opencl_icd_loader]
+    with:
+      PACKAGE_NAME: opencl_on_rocclr
+      DEPENDS: ${{toJSON(needs)}}
+
+  openmp_extras:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [thunk,lightning,devicelibs,hsa]
+    with:
+      PACKAGE_NAME: openmp_extras
+      DEPENDS: ${{toJSON(needs)}}
+
+  rdc:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [rocm_smi_lib,hsa,rocprofiler]
+    with:
+      PACKAGE_NAME: rdc
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocclr:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hsa,comgr,hipcc,rocprofiler-register]
+    with:
+      PACKAGE_NAME: rocclr
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocm_bandwidth_test:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hsa]
+    with:
+      PACKAGE_NAME: rocm_bandwidth_test
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocm_smi_lib:
+    uses: ./.github/workflows/build-package.yaml
+    with:
+      PACKAGE_NAME: rocm_smi_lib
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocm-cmake:
+    uses: ./.github/workflows/build-package.yaml
+    with:
+      PACKAGE_NAME: rocm-cmake
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocm-core:
+    uses: ./.github/workflows/build-package.yaml
+    with:
+      PACKAGE_NAME: rocm-core
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocm-gdb:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [dbgapi]
+    with:
+      PACKAGE_NAME: rocm-gdb
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocminfo:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hsa]
+    with:
+      PACKAGE_NAME: rocminfo
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocprofiler-register:
+    uses: ./.github/workflows/build-package.yaml
+    with:
+      PACKAGE_NAME: rocprofiler-register
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocprofiler-sdk:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hsa,aqlprofile,opencl_on_rocclr,hip_on_rocclr,comgr]
+    with:
+      PACKAGE_NAME: rocprofiler-sdk
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocprofiler:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hsa,roctracer,aqlprofile,opencl_on_rocclr,hip_on_rocclr,comgr]
+    with:
+      PACKAGE_NAME: rocprofiler
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocr_debug_agent:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,hsa,dbgapi]
+    with:
+      PACKAGE_NAME: rocr_debug_agent
+      DEPENDS: ${{toJSON(needs)}}
+
+  roctracer:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hsa,hip_on_rocclr]
+    with:
+      PACKAGE_NAME: roctracer
+      DEPENDS: ${{toJSON(needs)}}
+
+  thunk:
+    uses: ./.github/workflows/build-package.yaml
+    with:
+      PACKAGE_NAME: thunk
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocm-dev:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [rdc,hipify_clang,openmp_extras,omniperf,omnitrace,rocm-core,amd_smi_lib,hipcc,rocm_bandwidth_test,rocr_debug_agent,rocm-gdb]
+    with:
+      PACKAGE_NAME: rocm-dev
+      DEPENDS: ${{toJSON(needs)}}
+
+  amdmigraphx:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,half,rocblas,miopen-hip,lightning,hipcc]
+    with:
+      PACKAGE_NAME: amdmigraphx
+      DEPENDS: ${{toJSON(needs)}}
+
+  composable_kernel:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [lightning,hipcc,hip_on_rocclr,rocm-cmake]
+    with:
+      PACKAGE_NAME: composable_kernel
+      DEPENDS: ${{toJSON(needs)}}
+
+  half:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [rocm-cmake]
+    with:
+      PACKAGE_NAME: half
+      DEPENDS: ${{toJSON(needs)}}
+
+  hipblas:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,rocblas,rocsolver,lightning,hipcc]
+    with:
+      PACKAGE_NAME: hipblas
+      DEPENDS: ${{toJSON(needs)}}
+
+  hipblaslt:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,openmp_extras,hipblas,lightning,hipcc]
+    with:
+      PACKAGE_NAME: hipblaslt
+      DEPENDS: ${{toJSON(needs)}}
+
+  hipcub:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,rocprim,lightning,hipcc]
+    with:
+      PACKAGE_NAME: hipcub
+      DEPENDS: ${{toJSON(needs)}}
+
+  hipfft:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,openmp_extras,rocfft,rocrand,hiprand,lightning,hipcc]
+    with:
+      PACKAGE_NAME: hipfft
+      DEPENDS: ${{toJSON(needs)}}
+
+  hipfort:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [rocblas,hipblas,rocsparse,hipsparse,rocfft,hipfft,rocrand,hiprand,rocsolver,hipsolver,lightning,hipcc]
+    with:
+      PACKAGE_NAME: hipfort
+      DEPENDS: ${{toJSON(needs)}}
+
+  hiprand:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,rocrand,lightning,hipcc]
+    with:
+      PACKAGE_NAME: hiprand
+      DEPENDS: ${{toJSON(needs)}}
+
+  hipsolver:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,rocblas,rocsolver,rocsparse,lightning,hipcc,hipsparse]
+    with:
+      PACKAGE_NAME: hipsolver
+      DEPENDS: ${{toJSON(needs)}}
+
+  hipsparse:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,rocsparse,lightning,hipcc]
+    with:
+      PACKAGE_NAME: hipsparse
+      DEPENDS: ${{toJSON(needs)}}
+
+  hipsparselt:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,hipsparse,lightning,hipcc,openmp_extras]
+    with:
+      PACKAGE_NAME: hipsparselt
+      DEPENDS: ${{toJSON(needs)}}
+
+  hiptensor:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,composable_kernel,lightning,hipcc]
+    with:
+      PACKAGE_NAME: hiptensor
+      DEPENDS: ${{toJSON(needs)}}
+
+  miopen-deps:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [lightning,hipcc]
+    with:
+      PACKAGE_NAME: miopen-deps
+      DEPENDS: ${{toJSON(needs)}}
+
+  miopen-hip:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [composable_kernel,half,hip_on_rocclr,miopen-deps,rocblas,roctracer,lightning,hipcc]
+    with:
+      PACKAGE_NAME: miopen-hip
+      DEPENDS: ${{toJSON(needs)}}
+
+  mivisionx:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [amdmigraphx,miopen-hip,rpp,lightning,hipcc]
+    with:
+      PACKAGE_NAME: mivisionx
+      DEPENDS: ${{toJSON(needs)}}
+
+  rccl:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,hsa,lightning,hipcc,rocm_smi_lib,hipify_clang]
+    with:
+      PACKAGE_NAME: rccl
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocalution:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [rocblas,rocsparse,rocrand,lightning,hipcc]
+    with:
+      PACKAGE_NAME: rocalution
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocblas:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,openmp_extras,lightning,hipcc]
+    with:
+      PACKAGE_NAME: rocblas
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocal:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [mivisionx]
+    with:
+      PACKAGE_NAME: rocal
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocdecode:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,lightning,hipcc]
+    with:
+      PACKAGE_NAME: rocdecode
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocfft:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,rocrand,hiprand,lightning,hipcc,openmp_extras]
+    with:
+      PACKAGE_NAME: rocfft
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocmvalidationsuite:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,hsa,rocblas,rocm-core,lightning,hipcc,rocm_smi_lib]
+    with:
+      PACKAGE_NAME: rocmvalidationsuite
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocprim:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,lightning,hipcc]
+    with:
+      PACKAGE_NAME: rocprim
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocrand:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,lightning,hipcc]
+    with:
+      PACKAGE_NAME: rocrand
+      DEPENDS: ${{toJSON(needs)}}
+  
+  rocsolver:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,rocblas,rocsparse,lightning,hipcc]
+    with:
+      PACKAGE_NAME: rocsolver
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocsparse:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,rocprim,lightning,hipcc]
+    with:
+      PACKAGE_NAME: rocsparse
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocthrust:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,rocprim,lightning,hipcc]
+    with:
+      PACKAGE_NAME: rocthrust
+      DEPENDS: ${{toJSON(needs)}}
+
+  rocwmma:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [hip_on_rocclr,rocblas,lightning,hipcc,rocm-cmake,rocm_smi_lib]
+    with:
+      PACKAGE_NAME: rocwmma
+      DEPENDS: ${{toJSON(needs)}}
+
+  rpp:
+    uses: ./.github/workflows/build-package.yaml
+    needs: [half,lightning,hipcc,openmp_extras]
+    with:
+      PACKAGE_NAME: rpp
+      DEPENDS: ${{toJSON(needs)}}
