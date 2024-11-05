@@ -25,7 +25,7 @@ jobs:
       - name: Maximise build space
         uses: easimon/maximize-build-space@master
         with:
-          root-reserve-mb: 15360
+          root-reserve-mb: 30720
           remove-dotnet: true
           remove-android: true
           remove-haskell: true
@@ -51,12 +51,11 @@ jobs:
           else
             echo 'DEPS='${DEPS} >> $GITHUB_OUTPUT
           fi
-      - name: Download package dependencies
+      - name: Download state dependencies
         if: ${{inputs.DEPENDS != '' && inputs.DEPENDS != '{}'}}
         uses: actions/download-artifact@v4
         with:
-          pattern: Package-${{steps.analyse-deps.outputs.DEPS}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}
-          path: out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/deb
+          pattern: State-${{steps.analyse-deps.outputs.DEPS}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}
           merge-multiple: true
       - name: Download log dependencies
         if: ${{inputs.DEPENDS != '' && inputs.DEPENDS != '{}'}}
@@ -65,13 +64,6 @@ jobs:
           pattern: Logs-${{steps.analyse-deps.outputs.DEPS}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}
           path: out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/logs
           merge-multiple: true
-      - name: Install dependencies
-        if: ${{inputs.DEPENDS != '' && inputs.DEPENDS != '{}'}}
-        run: |
-          if [ -d out ]; then
-            find out -name "*.deb" -type f -exec sudo dpkg --force-all -i {} \;
-          fi
-          rm -rf out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/deb
 
       - name: Make ROCm
         run: |
@@ -84,11 +76,30 @@ jobs:
             -v $PWD:/src \
             -v /etc/passwd:/etc/passwd \
             -v /etc/shadow:/etc/shadow \
-            -v ${HOME}/.ccache:${HOME}/.ccache \
+            -v ${HOME}:${HOME} \
             -w /src \
             -u $(id -u):$(id -g) \
             rocm/rocm-build-ubuntu-${{matrix.version}}.04:6.2 \
-            make -f ROCm/tools/rocm-build/ROCm.mk -j ${NPROC:-$(nproc)} T_${{inputs.PACKAGE_NAME}}
+            bash -c "set -exuo pipefail; \
+              touch tar-diff-timestamp; \
+              find . -maxdepth 1 -name '*.tar.gz' -exec echo "Untarring" {} \; -exec sudo tar xf {} -C / \; -exec rm {} \; ; \
+              if [ -d out ]; then \
+                sudo chown -R $USER: out; \
+              fi; \
+              rm -rf states; \
+              make -f ROCm/tools/rocm-build/ROCm.mk -j ${NPROC:-$(nproc)} T_${{inputs.PACKAGE_NAME}}; \
+              if [ ${{inputs.PACKAGE_NAME}} = 'hipcc' ]; then \
+                sudo tar \
+                  -N ./tar-diff-timestamp \
+                  -czf state-${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}.tar.gz \
+                  /usr /opt /src/out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/build/hipcc; \
+              else \
+                sudo tar \
+                  -N ./tar-diff-timestamp \
+                  -czf state-${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}.tar.gz \
+                  /usr /opt; \
+              fi \
+            "
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
@@ -102,4 +113,11 @@ jobs:
         with:
           name: Logs-${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}
           path: out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/logs/${{inputs.PACKAGE_NAME}}*
+          retention-days: 3
+      - name: Upload state
+        uses: actions/upload-artifact@v4
+        with:
+          name: State-${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}
+          path: state-${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}.tar.gz
+          compression-level: 0
           retention-days: 3
