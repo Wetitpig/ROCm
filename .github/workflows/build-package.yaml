@@ -113,6 +113,7 @@ jobs:
         with:
           name: Logs-${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}
           path: out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/logs/${{inputs.PACKAGE_NAME}}*
+          overwrite: true
           retention-days: 3
       - name: Upload state
         uses: actions/upload-artifact@v4
