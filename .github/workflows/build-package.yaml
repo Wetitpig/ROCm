@@ -13,13 +13,13 @@ on:
 
 jobs:
   build:
-    name: ${{inputs.PACKAGE_NAME}}
     env:
       ROCM_VERSION: 6.2.2
       GPU_ARCHS: gfx900
     strategy:
       matrix:
         version: [20, 22, 24]
+    name: ${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04
     runs-on: ubuntu-latest
     steps:
       - name: Maximise build space
