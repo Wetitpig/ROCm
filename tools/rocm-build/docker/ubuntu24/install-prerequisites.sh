@@ -24,6 +24,7 @@ git --version
 
 # venv for python to be able to run pip3 without --break-system-packages
 python3 -m venv /opt/venv
+. /opt/venv/bin/activate
 
 pip3 install --no-cache-dir setuptools wheel tox
 pip3 install --no-cache-dir --pre CppHeaderParser argparse requests lxml barectf recommonmark jinja2==3.0.0 websockets matplotlib numpy scipy minimal msgpack pytest sphinx joblib PyYAML==5.3.1 rocm-docs-core cmake==3.25.2 pandas myst-parser
