@@ -191,7 +191,7 @@ else # } {
 	rm -f $$@.errors $$@ $$@.repackaged && \
 	$${INFRA_REPO}/build_$1.sh -c && source $${INFRA_REPO}/ccache-env-mathlib.sh && \
 	time bash -x $${INFRA_REPO}/build_$1.sh $${RELEASE_FLAG} $${SANITIZER_FLAG} && $${INFRA_REPO}/post_inst_pkg.sh "$1" ; \
-	then mv $$@.inprogress $$@ ; \
+	then mv $$@.inprogress $$@ && rm -rf $${BUILD_DIR} ; \
 	else mv $$@.inprogress $$@.errors ; echo Error in $1 >&2 ; exit 1 ;\
 	fi ) > $$@.inprogress 2>&1
 endif # }
