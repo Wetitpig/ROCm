@@ -14,7 +14,7 @@ on:
 jobs:
   build:
     env:
-      ROCM_VERSION: 6.2.2
+      ROCM_VERSION: 6.2.4
       GPU_ARCHS: gfx900
     strategy:
       matrix:
@@ -35,7 +35,7 @@ jobs:
       - name: Clone dependent repositories
         run: |
           mkdir -p ~/.bin && curl https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo && chmod a+rx ~/.bin/repo
-          ~/.bin/repo init -u http://github.com/ROCm/ROCm.git -b roc-6.2.x -m tools/rocm-build/rocm-${ROCM_VERSION}.xml --depth 1 && ~/.bin/repo sync
+          ~/.bin/repo init -u http://github.com/ROCm/ROCm.git -b roc-6.2.x -m default.xml --depth 1 && ~/.bin/repo sync
           if [ ${{inputs.PACKAGE_NAME}} = "rocm_bandwidth_test" ]; then cd rocm_bandwidth_test && git fetch --unshallow; fi
       - name: Clone repo
         uses: actions/checkout@v4
