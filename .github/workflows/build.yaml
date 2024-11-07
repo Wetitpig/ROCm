@@ -43,7 +43,7 @@ jobs:
 
   hip_on_rocclr:
     uses: ./.github/workflows/build-package.yaml
-    needs: [hsa,comgr,hipcc,rocprofiler-register]
+    needs: [lightning,thunk,devicelibs,hsa,comgr,hipcc,rocprofiler-register]
     with:
       PACKAGE_NAME: hip_on_rocclr
       DEPENDS: ${{toJSON(needs)}}
@@ -82,7 +82,7 @@ jobs:
 
   omnitrace:
     uses: ./.github/workflows/build-package.yaml
-    needs: [hipcc,hsa,hip_on_rocclr,rocm_smi_lib,rocprofiler,roctracer]
+    needs: [hipcc,hsa,hip_on_rocclr,rocm_smi_lib,rocprofiler,roctracer,rocm-cmake]
     with:
       PACKAGE_NAME: omnitrace
       DEPENDS: ${{toJSON(needs)}}
@@ -109,14 +109,14 @@ jobs:
 
   rdc:
     uses: ./.github/workflows/build-package.yaml
-    needs: [rocm_smi_lib,hsa,rocprofiler]
+    needs: [rocm_smi_lib,hsa,rocprofiler,amd_smi_lib]
     with:
       PACKAGE_NAME: rdc
       DEPENDS: ${{toJSON(needs)}}
 
   rocclr:
     uses: ./.github/workflows/build-package.yaml
-    needs: [hsa,comgr,hipcc,rocprofiler-register]
+    needs: [lightning,thunk,devicelibs,hsa,comgr,hipcc,rocprofiler-register]
     with:
       PACKAGE_NAME: rocclr
       DEPENDS: ${{toJSON(needs)}}
@@ -335,7 +335,7 @@ jobs:
 
   rocblas:
     uses: ./.github/workflows/build-package.yaml
-    needs: [hip_on_rocclr,openmp_extras,lightning,hipcc]
+    needs: [hip_on_rocclr,openmp_extras,lightning,hipcc,amd_smi_lib,rocm_smi_lib]
     with:
       PACKAGE_NAME: rocblas
       DEPENDS: ${{toJSON(needs)}}
@@ -356,14 +356,14 @@ jobs:
 
   rocfft:
     uses: ./.github/workflows/build-package.yaml
-    needs: [hip_on_rocclr,rocrand,hiprand,lightning,hipcc,openmp_extras]
+    needs: [hip_on_rocclr,rocrand,hiprand,lightning,hipcc,openmp_extras,amd_smi_lib]
     with:
       PACKAGE_NAME: rocfft
       DEPENDS: ${{toJSON(needs)}}
 
   rocmvalidationsuite:
     uses: ./.github/workflows/build-package.yaml
-    needs: [hip_on_rocclr,hsa,rocblas,rocm-core,lightning,hipcc,rocm_smi_lib]
+    needs: [hip_on_rocclr,hsa,rocblas,rocm-core,lightning,hipcc,rocm_smi_lib,hiprand]
     with:
       PACKAGE_NAME: rocmvalidationsuite
       DEPENDS: ${{toJSON(needs)}}
