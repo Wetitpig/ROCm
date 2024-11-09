@@ -105,6 +105,7 @@ clean() {
 
 copy_libs_to_workspace() {
     if [ "$ASAN_CMAKE_PARAMS" != "true" ]; then
+        mkdir -p "${OUT_DIR}/lib"
         cp -R "${ROCM_INSTALL_PATH}/lib/roctracer/" "${OUT_DIR}/lib/roctracer/"
     fi
 }
