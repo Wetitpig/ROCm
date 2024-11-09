@@ -235,13 +235,6 @@ jobs:
       PACKAGE_NAME: hipblas
       DEPENDS: ${{toJSON(needs)}}
 
-  hipblaslt:
-    uses: ./.github/workflows/build-package.yaml
-    needs: [hip_on_rocclr,openmp_extras,hipblas,lightning,hipcc]
-    with:
-      PACKAGE_NAME: hipblaslt
-      DEPENDS: ${{toJSON(needs)}}
-
   hipcub:
     uses: ./.github/workflows/build-package.yaml
     needs: [hip_on_rocclr,rocprim,lightning,hipcc]
@@ -282,13 +275,6 @@ jobs:
     needs: [hip_on_rocclr,rocsparse,lightning,hipcc]
     with:
       PACKAGE_NAME: hipsparse
-      DEPENDS: ${{toJSON(needs)}}
-
-  hipsparselt:
-    uses: ./.github/workflows/build-package.yaml
-    needs: [hip_on_rocclr,hipsparse,lightning,hipcc,openmp_extras]
-    with:
-      PACKAGE_NAME: hipsparselt
       DEPENDS: ${{toJSON(needs)}}
 
   hiptensor:
