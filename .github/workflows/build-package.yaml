@@ -36,7 +36,11 @@ jobs:
         run: |
           mkdir -p ~/.bin && curl https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo && chmod a+rx ~/.bin/repo
           ~/.bin/repo init -u http://github.com/ROCm/ROCm.git -b roc-6.2.x -m default.xml --depth 1 && ~/.bin/repo sync
-          if [ ${{inputs.PACKAGE_NAME}} = "rocm_bandwidth_test" ]; then cd rocm_bandwidth_test && git fetch --unshallow; fi
+          for PKG in "rocm_bandwidth_test" "omnitrace"; do
+            if [ ${{inputs.PACKAGE_NAME}} = ${PKG} ]; then
+              cd rocm_bandwidth_test && git fetch --unshallow
+            fi
+          done
       - name: Clone repo
         uses: actions/checkout@v4
         with:
