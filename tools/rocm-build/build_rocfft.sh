@@ -35,6 +35,7 @@ build_rocfft() {
         -DBUILD_CLIENTS_TESTS=ON \
         -DBUILD_CLIENTS_RIDER=ON  \
         -DCPACK_SET_DESTDIR=OFF  \
+        -DROCFFT_KERNEL_CACHE_ENABLE=OFF \
         "$COMPONENT_SRC"
 
     cmake --build "$BUILD_DIR" -- -j${PROC}
