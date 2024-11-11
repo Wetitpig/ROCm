@@ -86,12 +86,16 @@ jobs:
             rocm/rocm-build-ubuntu-${{matrix.version}}.04:6.2 \
             bash -c "set -exuo pipefail; \
               touch tar-diff-timestamp; \
-              find . -maxdepth 1 -name '*.tar.gz' -exec echo "Untarring" {} \; -exec sudo tar xf {} -C / \; -exec rm {} \; ; \
+              find . -maxdepth 1 -name '*.tar.gz' -exec echo "Untarring" {} \; -exec sudo tar xmf {} -C / \; -exec rm {} \; ; \
               if [ -d out ]; then \
                 sudo chown -R $USER: out; \
+                find out -name '*.repackaged' -exec cp {} {}.2 \; ; \
               fi; \
               rm -rf states; \
               make -f ROCm/tools/rocm-build/ROCm.mk -j ${NPROC:-$(nproc)} T_${{inputs.PACKAGE_NAME}}; \
+              for file in $(find out -name '*.repackaged.2'); do \
+                mv ${file} ${file%.2}; \
+              done; \
               if [ ${{inputs.PACKAGE_NAME}} = 'hipcc' ]; then \
                 sudo tar \
                   -N ./tar-diff-timestamp \

@@ -181,8 +181,8 @@ C_$1: FRC
 ${OUT_DIR}/logs/$1: | ${OUT_DIR}/logs
 ifneq ($(wildcard ${OUT_DIR}/logs/$1.repackaged),)
 	@echo  Skipping build of $1 as it has already been repackaged
-	cat $$@.repackaged > $$@
-	rm -f $$@.repackaged
+#	cat $$@.repackaged > $$@
+#	rm -f $$@.repackaged
 else # } {
 	@echo  $1 started due to $$? | sed "s:${OUT_DIR}/logs/::g"
 # Build in a subshell so we get the time output
