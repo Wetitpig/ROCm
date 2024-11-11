@@ -389,13 +389,6 @@ jobs:
       PACKAGE_NAME: rocthrust
       DEPENDS: ${{toJSON(needs)}}
 
-  rocwmma:
-    uses: ./.github/workflows/build-package.yaml
-    needs: [hip_on_rocclr,rocblas,lightning,hipcc,rocm-cmake,rocm_smi_lib]
-    with:
-      PACKAGE_NAME: rocwmma
-      DEPENDS: ${{toJSON(needs)}}
-
   rpp:
     uses: ./.github/workflows/build-package.yaml
     needs: [half,lightning,hipcc,openmp_extras]
