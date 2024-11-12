@@ -17,7 +17,7 @@ build_miopen_ck() {
     mkdir "$BUILD_DIR" && cd "$BUILD_DIR"
 
     if [ -n "$GPU_ARCHS" ]; then
-        GPU_TARGETS="-DAMDGPU_TARGETS=${GPU_ARCHS}"
+        GPU_TARGETS="-DGPU_TARGETS=${GPU_ARCHS}"
     fi
 
     if [ "${ASAN_CMAKE_PARAMS}" == "true" ] ; then
