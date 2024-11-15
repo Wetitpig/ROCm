@@ -15,7 +15,7 @@ jobs:
   build:
     env:
       ROCM_VERSION: 6.2.4
-      GPU_ARCHS: gfx900
+      GPU_ARCHS: 'gfx900;gfx908'
     strategy:
       matrix:
         version: [22, 24]
@@ -99,12 +99,12 @@ jobs:
               if [ ${{inputs.PACKAGE_NAME}} = 'hipcc' ]; then \
                 sudo tar \
                   -N ./tar-diff-timestamp \
-                  -czf state-${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}.tar.gz \
+                  -czf 'state-${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}.tar.gz' \
                   /usr /opt /src/out/ubuntu-${{matrix.version}}.04/${{matrix.version}}.04/build/hipcc; \
               else \
                 sudo tar \
                   -N ./tar-diff-timestamp \
-                  -czf state-${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}.tar.gz \
+                  -czf 'state-${{inputs.PACKAGE_NAME}}-${{matrix.version}}.04-${{env.GPU_ARCHS}}.tar.gz' \
                   /usr /opt; \
               fi \
             "
